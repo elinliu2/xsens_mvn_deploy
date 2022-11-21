@@ -1,0 +1,23 @@
+<?xml version="2.0"?>
+<robot name="multipleshapes">
+  <link name="base_link">
+    <visual>
+      <geometry>
+              <sphere radius="0.05"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="upper_arm">
+    <visual>
+      <geometry>
+        <box size="0.6 0.1 0.2"/>
+      </geometry>
+    <origin rpy="0 0 0" xyz="0.3 0 0"/>
+    </visual>
+  </link>
+  <joint name="base_to_upper_arm" type="fixed">
+    <parent link="base_link"/>
+    <child link="upper_arm"/>
+  </joint>
+</robot>

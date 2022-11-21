@@ -1,5 +1,9 @@
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
+#include <visualization_msgs/Marker.h>
+#include <string>
+#include <sensor_msgs/JointState.h>
+
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -226,174 +230,393 @@ void handle_udp_msg(int fd, int argc, char* argv[])
     ros::NodeHandle n;
     //ros::Publisher data_publisher = n.advertise<sensor_msgs::JointState>("position_data", 50);
     tf::TransformBroadcaster pelvis, l5, l3, t12, t8, neck, head, right_shoulder, right_upper_arm, right_forearm, right_hand, left_shoulder, left_upper_arm, left_forearm, left_hand, right_upper_leg, right_lower_leg, right_foot, right_toe, left_upper_leg, left_lower_leg, left_foot, left_toe;
-   
+	ros::Rate r(1);
+	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+
+	ros::Publisher joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
+    tf::TransformBroadcaster broadcaster;
+	geometry_msgs::TransformStamped odom_trans;
+	sensor_msgs::JointState joint_state;
+    odom_trans.header.frame_id = "odom";
+    odom_trans.child_frame_id = "axis";
+
     while(ros::ok) 
     {
-	while(1) {
-	    memset(buf, 0, BUFF_LEN);
-	    count = recvfrom(fd, buf+read_bytes, BUFF_LEN, 0, (struct sockaddr*)&client_addr, &len);
-	    if(count == -1)
-		{
-		    printf("receieve data fail!\n");
-		    return;
-		}
-	    read_bytes += count;
-	    if (read_bytes >= 24) {
-		parse_header(&header, buf+cur_index, &time_stamp_sec, &time_stamp_nsec);
-		cur_index += 24;
-		if (strncmp(header.ID_String, "MXTP02", 6) == 0) {
-		    //Message type 02 - Pose data (Quaternion)
-		    if (read_bytes >= 24+32*header.datagram_counter) {
-			int p = 0;
-			//printf("Message type 02: Pose data (Quaternion)\n"); 
-			for (p = 0; p < header.datagram_counter; p++) {
-			    parse_body(buf+cur_index+p*32, &segment_id,  &x, &y, &z, &re, &i, &j, &k);
-			    printf("re = %f, i = %f, j = %f, k = %f\n", re, i, j, k);
-			    ros::Time temp;	    
-			    switch (segment_id) {
-			    case 1:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-				pelvis.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "pelvis"));
-				break;
-			    case 2:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-				l5.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "l5"));
-				break;
-			    case 3:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        l3.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "l3"));
-				break;
-			    case 4:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        t12.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "t12"));
-				break;
-			    case 5:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        t8.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "t8"));
-				break;
-			    case 6:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        neck.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "neck"));
-				break;
-			    case 7:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        head.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "head"));
-				break;
-			    case 8:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        right_shoulder.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_shoulder"));
-				break;
-			    case 9:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        right_upper_arm.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_upper_arm"));
-				break;
-			    case 10:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        right_forearm.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_forearm"));
-				break;
-			    case 11:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        right_hand.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_hand"));
-				break;
-			    case 12:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        left_shoulder.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_shoulder"));
-				break;
-			    case 13:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        left_upper_arm.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_upper_arm"));
-				break;
-			    case 14:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        left_forearm.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_forearm"));
-				break;
-			    case 15:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        left_hand.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_hand"));
-				break;
-				break;
-			    case 16:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        right_upper_leg.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_upper_leg"));
-				break;
-			    case 17:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        right_lower_leg.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_lower_leg"));
-				break;
-			    case 18:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        right_foot.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_foot"));
-				break;
-			    case 19:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-			        right_toe.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_toe"));
-				break;
-			    case 20:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-				left_upper_leg.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_upper_leg"));
-				break;
-			    case 21:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-				left_lower_leg.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_lower_leg"));
-				break;
-			    case 22:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-				left_foot.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_foot"));
-				break;
-			    case 23:
-				temp.sec = time_stamp_sec;
-				temp.nsec = time_stamp_nsec;
-				left_toe.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_toe"));
-				break;
-			    }
+		visualization_msgs::Marker markers[23];
+		double marker_size[15][3] = {
+			{0.1, 0.1, 0.1}, // pelvis
+			{0.075, 0.075, 0.075}, // l5
+			{0.075, 0.075, 0.075}, // l3
+			{0.05, 0.05, 0.05}, // t12
+			{0.05, 0.05, 0.05}, // t8
+			{0.05, 0.1, 0.05}, // neck
+			{0.2, 0.2, 0.1}, // head
+			{0.05, 0.05, 0.05}, // right shoulder
+			{0.5, 0.05, 0.05}, // right upper arm
+			{0.5, 0.05, 0.05}, // right forearm
+			{0.05, 0.05, 0.05}, // right hand
+			{0.05, 0.05, 0.05}, // left shoulder
+			{0.5, 0.05, 0.05}, // left upper arm
+			{0.5, 0.05, 0.05}, // left forearm
+			{0.05, 0.05, 0.05} // left hand
+		};
+		double arm_points[2][3];
+
+			// markers[0].pose.position.x = 0.000000;
+			// markers[0].pose.position.y = 0.000000;
+			// markers[0].pose.position.z = 1.250000;
+			// markers[0].pose.orientation.x = 2.501707;
+			// markers[0].pose.orientation.y = -11.865766;
+			// markers[0].pose.orientation.z = -25.172886;
+			// markers[0].pose.orientation.w = 50.020779;
+
+			// markers[1].pose.position.x = -0.044932;
+			// markers[1].pose.position.y = 0.018906;
+			// markers[1].pose.position.z = 1.335670;
+			// markers[1].pose.orientation.x = 4.631413;
+			// markers[1].pose.orientation.y = 0.312930;
+			// markers[1].pose.orientation.z = -24.130754;
+			// markers[1].pose.orientation.w = 51.758736;
+
+			// markers[2].pose.position.x = -0.051285;
+			// markers[2].pose.position.y = 0.002468;
+			// markers[2].pose.position.z = 1.443354;
+			// markers[2].pose.orientation.x = 4.321694;
+			// markers[2].pose.orientation.y = 3.118921;
+			// markers[2].pose.orientation.z = -23.542290;
+			// markers[2].pose.orientation.w = 51.963100;
+
+			// markers[3].pose.position.x = -0.047568;
+			// markers[3].pose.position.y = -0.015679;
+			// markers[3].pose.position.z = 1.541225;
+			// markers[3].pose.orientation.x = 5.202236;
+			// markers[3].pose.orientation.y = 8.523606;
+			// markers[3].pose.orientation.z = -22.526833;
+			// markers[3].pose.orientation.w = 51.726540;
+
+			// markers[4].pose.position.x = -0.027890;
+			// markers[4].pose.position.y = -0.043688;
+			// markers[4].pose.position.z = 1.634649;
+			// markers[4].pose.orientation.x = 6.924215;
+			// markers[4].pose.orientation.y = 15.118811;
+			// markers[4].pose.orientation.z = -21.299715;
+			// markers[4].pose.orientation.w = 50.523327;
+
+			// markers[5].pose.position.x = 0.024514;
+			// markers[5].pose.position.y = -0.100810;
+			// markers[5].pose.position.z = 1.750692;
+			// markers[5].pose.orientation.x = 6.315789;
+			// markers[5].pose.orientation.y = 21.653807;
+			// markers[5].pose.orientation.z = -16.617392;
+			// markers[5].pose.orientation.w = 49.978931;
+
+			// markers[6].pose.position.x = 0.079551;
+			// markers[6].pose.position.y = -0.138843;
+			// markers[6].pose.position.z = 1.814727;
+			// markers[6].pose.orientation.x = -0.216051;
+			// markers[6].pose.orientation.y = 17.391775;
+			// markers[6].pose.orientation.z = -9.279763;
+			// markers[6].pose.orientation.w = 53.797520;
+
+			// markers[7].pose.position.x = -0.020243;
+			// markers[7].pose.position.y = -0.096641;
+			// markers[7].pose.position.z = 1.699143;
+			// markers[7].pose.orientation.x = 10.992354;
+			// markers[7].pose.orientation.y = 17.610273;
+			// markers[7].pose.orientation.z = -23.740341;
+			// markers[7].pose.orientation.w = 47.835659;
+
+			// markers[8].points.resize(6);
+			// markers[8].points[0].x = -0.133029;
+			// markers[8].points[0].y = -0.177793;
+			// markers[8].points[0].z = 1.689983;
+			// markers[8].points[1].x = -0.014050;
+			// markers[8].points[1].y = -0.298868;
+			// markers[8].points[1].z = 1.444568;
+			
+		
+			// markers[9].points.resize(6);
+			// markers[9].points[0].x = -0.014050;
+			// markers[9].points[0].y = -0.298868;
+			// markers[9].points[0].z = 1.444568;
+			// markers[9].points[1].x = 0.163226;
+			// markers[9].points[1].y = -0.465767;
+			// markers[9].points[1].z = 1.430470;
+
+		while(1){
+			for (int i = 0; i < 7; i++){
+				markers[i].header.frame_id = "my_frame";
+				markers[i].header.stamp = ros::Time::now();
+				markers[i].ns = "body";
+				markers[i].id = segment_id;
+				markers[i].scale.x = marker_size[i][0];
+				markers[i].scale.y = marker_size[i][1];
+				markers[i].scale.z = marker_size[i][2];
+				markers[i].color.r = 0.0f;
+				markers[i].color.g = 1.0f;
+				markers[i].color.b = 0.0f;
+				markers[i].color.a = 1.0;
+
+				// if(i != 9 && i != 10 && i != 11){
+					markers[i].type = visualization_msgs::Marker::CUBE;
+					
+				// } else {
+				// 	markers[i].type = visualization_msgs::Marker::ARROW;
+					
+				// }
+				markers[i].action = visualization_msgs::Marker::ADD;
+				markers[i].lifetime = ros::Duration();	
+				marker_pub.publish(markers[i]);
 			}
-			cur_index += 32*header.datagram_counter;
-			int left = read_bytes - cur_index;
-			//printf("bytes left to parse = %d\n", left);
-			if (left > 0)
-			    memcpy(buf, buf+cur_index, left);
-			read_bytes = left;
-			cur_index = 0;
-		    } else {
-			cur_index -= 24;
-		    }
-		} else {
-		    //TODO
-		    printf("other type\n");
+			odom_trans.header.stamp = ros::Time::now();
+			odom_trans.transform.translation.x = -0.133029;
+			odom_trans.transform.translation.y = -0.177793;
+			odom_trans.transform.translation.z = 1.689983;
+			odom_trans.transform.rotation.x = 31.207138;
+			odom_trans.transform.rotation.y = -22.649418;
+			odom_trans.transform.rotation.z = -1.236092;
+			odom_trans.transform.rotation.w = 42.360340;
+			joint_pub.publish(joint_state);
+			broadcaster.sendTransform(odom_trans);
 		}
-		//break;
-	    }		
+		
+
+	    // memset(buf, 0, BUFF_LEN);
+	    // count = recvfrom(fd, buf+read_bytes, BUFF_LEN, 0, (struct sockaddr*)&client_addr, &len);
+	    // if(count == -1)
+		// {
+		//     printf("receieve data fail!\n");
+		//     return;
+		// }
+	    // read_bytes += count;
+	    // if (read_bytes >= 24) {
+		// 	parse_header(&header, buf+cur_index, &time_stamp_sec, &time_stamp_nsec);
+		// 	cur_index += 24;
+		// 	printf("time_code: %d\n",header.time_code);
+		// 	printf("read_bytes: %d\n",read_bytes);
+		// 	printf("cur_index: %d\n",cur_index);
+		// 	if (strncmp(header.ID_String, "MXTP02", 6) == 0) {
+		// 		//Message type 02 - Pose data (Quaternion)
+		// 		if (read_bytes >= 24+32*header.datagram_counter) {
+		// 			int p = 0;
+		// 			//printf("Message type 02: Pose data (Quaternion)\n"); 
+		// 			for (p = 0; p < header.datagram_counter; p++) {
+		// 				parse_body(buf+cur_index+p*32, &segment_id,  &x, &y, &z, &re, &i, &j, &k);
+		// 				printf("re = %f, i = %f, j = %f, k = %f, x = %f, y= %f, z= %f\n", re, i, j, k, x, y, z);
+		// 				ros::Time temp;	 
+		// 				if(segment_id < 16 ) { 
+		// 					markers[segment_id-1].header.frame_id = "my_frame";
+		// 					markers[segment_id-1].header.stamp = ros::Time::now();
+		// 					markers[segment_id-1].ns = "body";
+		// 					markers[segment_id-1].id = segment_id;
+		// 					markers[segment_id-1].scale.x = marker_size[segment_id-1][0];
+		// 					markers[segment_id-1].scale.y = marker_size[segment_id-1][1];
+		// 					markers[segment_id-1].scale.z = marker_size[segment_id-1][2];
+		// 					markers[segment_id-1].color.r = 0.0f;
+		// 					markers[segment_id-1].color.g = 1.0f;
+		// 					markers[segment_id-1].color.b = 0.0f;
+		// 					markers[segment_id-1].color.a = 1.0;
+		// 					markers[segment_id-1].lifetime = ros::Duration();	
+
+		// 					if(segment_id != 8 && segment_id != 9 && segment_id != 10){
+		// 						markers[segment_id-1].type = visualization_msgs::Marker::CUBE;
+		// 						markers[segment_id-1].action = visualization_msgs::Marker::ADD;
+		// 						markers[segment_id-1].pose.position.x = x;
+		// 						markers[segment_id-1].pose.position.y = y;
+		// 						markers[segment_id-1].pose.position.z = z;
+		// 						markers[segment_id-1].pose.orientation.x = i;
+		// 						markers[segment_id-1].pose.orientation.y = j;
+		// 						markers[segment_id-1].pose.orientation.z = k;
+		// 						markers[segment_id-1].pose.orientation.w = re;
+		// 					}
+		// 					else if(segment_id == 8){
+		// 						arm_points[0][0] = x;
+		// 						arm_points[0][1] = y;
+		// 						arm_points[0][2] = z;
+		// 					}
+		// 					else if(segment_id == 9){
+		// 						arm_points[1][0] = x;
+		// 						arm_points[1][1] = y;
+		// 						arm_points[1][2] = z;
+		// 						markers[segment_id-1].type = visualization_msgs::Marker::ARROW;
+		// 						markers[segment_id-1].action = visualization_msgs::Marker::ADD;
+		// 						markers[segment_id-1].points.resize(5);
+		// 						markers[segment_id-1].points[0].x = x;
+		// 						markers[segment_id-1].points[0].y = y;
+		// 						markers[segment_id-1].points[0].z = z;
+		// 						markers[segment_id-1].points[1].x = arm_points[0][0];
+		// 						markers[segment_id-1].points[1].y = arm_points[0][1];
+		// 						markers[segment_id-1].points[1].z = arm_points[0][2];
+		// 					}
+		// 					else if(segment_id == 10){
+		// 						markers[segment_id-1].type = visualization_msgs::Marker::ARROW;
+		// 						markers[segment_id-1].action = visualization_msgs::Marker::ADD;
+		// 						markers[segment_id-1].points.resize(5);
+		// 						markers[segment_id-1].points[0].x = x;
+		// 						markers[segment_id-1].points[0].y = y;
+		// 						markers[segment_id-1].points[0].z = z;
+		// 						markers[segment_id-1].points[1].x = arm_points[1][0];
+		// 						markers[segment_id-1].points[1].y = arm_points[1][1];
+		// 						markers[segment_id-1].points[1].z = arm_points[1][2];
+		// 					}
+							
+		// 					marker_pub.publish(markers[segment_id-1]);   
+		// 				}
+						
+		// 				switch (segment_id) {
+		// 					case 1:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						pelvis.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "pelvis"));
+		// 					break;
+		// 					case 2:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						l5.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "l5"));
+		// 					break;
+		// 					case 3:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						l3.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "l3"));
+		// 					break;
+		// 					case 4:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						t12.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "t12"));
+		// 					break;
+		// 					case 5:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						t8.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "t8"));
+		// 					break;
+		// 					case 6:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						neck.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "neck"));
+		// 					break;
+		// 					case 7:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						head.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "head"));
+		// 					break;
+		// 					case 8:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						right_shoulder.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_shoulder"));
+		// 					break;
+		// 					case 9:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						right_upper_arm.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_upper_arm"));
+		// 					break;
+		// 					case 10:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						right_forearm.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_forearm"));
+		// 					break;
+		// 					case 11:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						right_hand.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_hand"));
+		// 					break;
+		// 					case 12:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						left_shoulder.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_shoulder"));
+		// 					break;
+		// 					case 13:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						left_upper_arm.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_upper_arm"));
+		// 					break;
+		// 					case 14:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						left_forearm.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_forearm"));
+		// 					break;
+		// 					case 15:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						left_hand.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_hand"));
+		// 					break;
+		// 					case 16:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						right_upper_leg.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_upper_leg"));
+		// 					break;
+		// 					case 17:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						right_lower_leg.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_lower_leg"));
+		// 					break;
+		// 					case 18:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						right_foot.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_foot"));
+		// 					break;
+		// 					case 19:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						right_toe.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "right_toe"));
+		// 					break;
+		// 					case 20:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						left_upper_leg.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_upper_leg"));
+		// 					break;
+		// 					case 21:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						left_lower_leg.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_lower_leg"));
+		// 					break;
+		// 					case 22:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						left_foot.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_foot"));
+		// 					break;
+		// 					case 23:
+		// 						temp.sec = time_stamp_sec;
+		// 						temp.nsec = time_stamp_nsec;
+		// 						left_toe.sendTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(i, j, k, re), tf::Vector3(x, y, z)), temp, "body_sonser", "left_toe"));
+		// 					break;
+		// 				}
+		// 			}
+		// 			cur_index += 32*header.datagram_counter;
+		// 			int left = read_bytes - cur_index;
+		// 			//printf("bytes left to parse = %d\n", left);
+		// 			if (left > 0)
+		// 				memcpy(buf, buf+cur_index, left);
+		// 			read_bytes = left;
+		// 			cur_index = 0;
+		// 		} else {
+		// 			cur_index -= 24;
+		// 		}
+		// 	}
+		// 	else {
+		// 		//TODO
+		// 		if (read_bytes >= 24) {
+		// 		cur_index += 32*header.datagram_counter;
+        //                                 int left = read_bytes - cur_index;
+        //                                 //printf("bytes left to parse = %d\n", left);
+        //                                 if (left > 0)
+        //                                         memcpy(buf, buf+cur_index, left);
+        //                                 read_bytes = left;
+        //                                 cur_index = 0;
+        //                         } else {
+        //                                 cur_index -= 24;
+        //                         }
+		// 	}		
+		// } 	
+
 	    round++;
 	    printf("round = %d\n", round);
 	    //if (round == 2)
 	    //break;
 	    //parse_data(buf, &index, &parse_bytes);
 	    //memset(buf, 0, BUFF_LEN);
+	    //r.sleep();
 	}
-    }
-    free(buf);
+	free(buf);
 }
 
 
@@ -407,32 +630,32 @@ int main(int argc, char* argv[])
     //ros::init(argc, argv, "xsens_data_publisher"); //name of the node
     //ros::NodeHandle n;
     //ros::Publisher data_publisher = n.advertise<sensor_msgs::JointState>("position_data", 50);
-    
+    printf("test2");    
     int server_fd, ret;
-    struct sockaddr_in ser_addr;
+    // struct sockaddr_in ser_addr;
 	
-    server_fd = socket(AF_INET, SOCK_DGRAM, 0); //AF_INET: IPV4; SOCK_DGRAM: UDP
-    if(server_fd < 0)
-	{
-	    printf("create socket fail!\n");
-	    return -1;
-	}
+    // server_fd = socket(AF_INET, SOCK_DGRAM, 0); //AF_INET: IPV4; SOCK_DGRAM: UDP
+    // if(server_fd < 0)
+	// {
+	//     printf("create socket fail!\n");
+	//     return -1;
+	// }
 	
-    memset(&ser_addr, 0, sizeof(ser_addr));
-    ser_addr.sin_family = AF_INET;
-    ser_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    ser_addr.sin_port = htons(SERVER_PORT);
+    // memset(&ser_addr, 0, sizeof(ser_addr));
+    // ser_addr.sin_family = AF_INET;
+    // ser_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    // ser_addr.sin_port = htons(SERVER_PORT);
 	
-    ret = bind(server_fd, (struct sockaddr*)&ser_addr, sizeof(ser_addr));
-    if(ret < 0)
-	{
-	    printf("socket bind fail!\n");
-	    return -1;
-	}
+    // ret = bind(server_fd, (struct sockaddr*)&ser_addr, sizeof(ser_addr));
+    // if(ret < 0)
+	// {
+	//     printf("socket bind fail!\n");
+	//     return -1;
+	// }
 		
-    handle_udp_msg(server_fd, argc, argv);
+     handle_udp_msg(server_fd, argc, argv);
 	
-    close(server_fd);
+    // close(server_fd);
 
 
 

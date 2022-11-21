@@ -1,0 +1,5 @@
+<launch>
+        <param name="robot_description" command="cat $~/catkin_ws/src/xsens_mvn_deploy/ros/xsens_data_tf/src/arm_test.xml" />
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+        <node name="xsens_data_publisher_tf" pkg="xsens_data_tf" type="state_publisher" />
+</launch>
