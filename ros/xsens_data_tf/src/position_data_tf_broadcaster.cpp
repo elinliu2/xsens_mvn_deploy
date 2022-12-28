@@ -226,41 +226,79 @@ void handle_udp_msg(int fd, int argc, char* argv[])
     Header header;
     int round = 0;
 
-    ros::init(argc, argv, "xsens_data_publisher_tf"); //name of the node
-    ros::NodeHandle n;
-    //ros::Publisher data_publisher = n.advertise<sensor_msgs::JointState>("position_data", 50);
-    tf::TransformBroadcaster pelvis, l5, l3, t12, t8, neck, head, right_shoulder, right_upper_arm, right_forearm, right_hand, left_shoulder, left_upper_arm, left_forearm, left_hand, right_upper_leg, right_lower_leg, right_foot, right_toe, left_upper_leg, left_lower_leg, left_foot, left_toe;
-	ros::Rate r(1);
-	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+    // ros::init(argc, argv, "xsens_data_publisher_tf"); //name of the node
+    // ros::NodeHandle n;
+    // //ros::Publisher data_publisher = n.advertise<sensor_msgs::JointState>("position_data", 50);
+    // tf::TransformBroadcaster pelvis, l5, l3, t12, t8, neck, head, right_shoulder, right_upper_arm, right_forearm, right_hand, left_shoulder, left_upper_arm, left_forearm, left_hand, right_upper_leg, right_lower_leg, right_foot, right_toe, left_upper_leg, left_lower_leg, left_foot, left_toe;
+	// ros::Rate r(1);
+	// ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 
-	ros::Publisher joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
+	ros::init(argc, argv, "state_publisher");
+    ros::NodeHandle n;
+    ros::Publisher joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
     tf::TransformBroadcaster broadcaster;
-	geometry_msgs::TransformStamped odom_trans;
-	sensor_msgs::JointState joint_state;
+    ros::Rate loop_rate(30);
+
+    const double degree = M_PI/180;
+
+    // robot state
+    double base_to_upper_arm = 0, angle = 0;
+
+    // message declarations
+    geometry_msgs::TransformStamped odom_trans;
+    sensor_msgs::JointState joint_state;
     odom_trans.header.frame_id = "odom";
     odom_trans.child_frame_id = "axis";
 
-    while(ros::ok) 
-    {
-		visualization_msgs::Marker markers[23];
-		double marker_size[15][3] = {
-			{0.1, 0.1, 0.1}, // pelvis
-			{0.075, 0.075, 0.075}, // l5
-			{0.075, 0.075, 0.075}, // l3
-			{0.05, 0.05, 0.05}, // t12
-			{0.05, 0.05, 0.05}, // t8
-			{0.05, 0.1, 0.05}, // neck
-			{0.2, 0.2, 0.1}, // head
-			{0.05, 0.05, 0.05}, // right shoulder
-			{0.5, 0.05, 0.05}, // right upper arm
-			{0.5, 0.05, 0.05}, // right forearm
-			{0.05, 0.05, 0.05}, // right hand
-			{0.05, 0.05, 0.05}, // left shoulder
-			{0.5, 0.05, 0.05}, // left upper arm
-			{0.5, 0.05, 0.05}, // left forearm
-			{0.05, 0.05, 0.05} // left hand
-		};
-		double arm_points[2][3];
+    while (ros::ok()) {
+        // //update joint_state
+        // joint_state.header.stamp = ros::Time::now();
+        // joint_state.name.resize(1);
+        // joint_state.position.resize(1);
+        // joint_state.name[0] ="base_to_upper_arm";
+        // joint_state.position[0] = base_to_upper_arm;
+
+
+        // update transform
+        // (moving in a circle with radius=2)
+        odom_trans.header.stamp = ros::Time::now();
+        odom_trans.transform.translation.x = cos(angle)*2;
+        odom_trans.transform.translation.y = sin(angle)*2;
+        odom_trans.transform.translation.z = .7;
+        odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(angle+M_PI/2);
+
+        //send the joint state and transform
+        // joint_pub.publish(joint_state);
+        broadcaster.sendTransform(odom_trans);
+
+        // Create new robot state
+        angle += degree/4;
+
+        // This will adjust as needed per iteration
+        loop_rate.sleep();
+    }
+
+    // while(ros::ok) 
+    // {
+	// 	visualization_msgs::Marker markers[23];
+		// double marker_size[15][3] = {
+		// 	{0.1, 0.1, 0.1}, // pelvis
+		// 	{0.075, 0.075, 0.075}, // l5
+		// 	{0.075, 0.075, 0.075}, // l3
+		// 	{0.05, 0.05, 0.05}, // t12
+		// 	{0.05, 0.05, 0.05}, // t8
+		// 	{0.05, 0.1, 0.05}, // neck
+		// 	{0.2, 0.2, 0.1}, // head
+		// 	{0.05, 0.05, 0.05}, // right shoulder
+		// 	{0.5, 0.05, 0.05}, // right upper arm
+		// 	{0.5, 0.05, 0.05}, // right forearm
+		// 	{0.05, 0.05, 0.05}, // right hand
+		// 	{0.05, 0.05, 0.05}, // left shoulder
+		// 	{0.5, 0.05, 0.05}, // left upper arm
+		// 	{0.5, 0.05, 0.05}, // left forearm
+		// 	{0.05, 0.05, 0.05} // left hand
+		// };
+		// double arm_points[2][3];
 
 			// markers[0].pose.position.x = 0.000000;
 			// markers[0].pose.position.y = 0.000000;
@@ -343,42 +381,42 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 			// markers[9].points[1].y = -0.465767;
 			// markers[9].points[1].z = 1.430470;
 
-		while(1){
-			for (int i = 0; i < 7; i++){
-				markers[i].header.frame_id = "my_frame";
-				markers[i].header.stamp = ros::Time::now();
-				markers[i].ns = "body";
-				markers[i].id = segment_id;
-				markers[i].scale.x = marker_size[i][0];
-				markers[i].scale.y = marker_size[i][1];
-				markers[i].scale.z = marker_size[i][2];
-				markers[i].color.r = 0.0f;
-				markers[i].color.g = 1.0f;
-				markers[i].color.b = 0.0f;
-				markers[i].color.a = 1.0;
+		// while(1){
+			// for (int i = 0; i < 7; i++){
+			// 	markers[i].header.frame_id = "my_frame";
+			// 	markers[i].header.stamp = ros::Time::now();
+			// 	markers[i].ns = "body";
+			// 	markers[i].id = segment_id;
+			// 	markers[i].scale.x = marker_size[i][0];
+			// 	markers[i].scale.y = marker_size[i][1];
+			// 	markers[i].scale.z = marker_size[i][2];
+			// 	markers[i].color.r = 0.0f;
+			// 	markers[i].color.g = 1.0f;
+			// 	markers[i].color.b = 0.0f;
+			// 	markers[i].color.a = 1.0;
 
-				// if(i != 9 && i != 10 && i != 11){
-					markers[i].type = visualization_msgs::Marker::CUBE;
+			// 	// if(i != 9 && i != 10 && i != 11){
+			// 		markers[i].type = visualization_msgs::Marker::CUBE;
 					
-				// } else {
-				// 	markers[i].type = visualization_msgs::Marker::ARROW;
+			// 	// } else {
+			// 	// 	markers[i].type = visualization_msgs::Marker::ARROW;
 					
-				// }
-				markers[i].action = visualization_msgs::Marker::ADD;
-				markers[i].lifetime = ros::Duration();	
-				marker_pub.publish(markers[i]);
-			}
-			odom_trans.header.stamp = ros::Time::now();
-			odom_trans.transform.translation.x = -0.133029;
-			odom_trans.transform.translation.y = -0.177793;
-			odom_trans.transform.translation.z = 1.689983;
-			odom_trans.transform.rotation.x = 31.207138;
-			odom_trans.transform.rotation.y = -22.649418;
-			odom_trans.transform.rotation.z = -1.236092;
-			odom_trans.transform.rotation.w = 42.360340;
-			joint_pub.publish(joint_state);
-			broadcaster.sendTransform(odom_trans);
-		}
+			// 	// }
+			// 	markers[i].action = visualization_msgs::Marker::ADD;
+			// 	markers[i].lifetime = ros::Duration();	
+			// 	marker_pub.publish(markers[i]);
+			// }
+		// 	odom_trans.header.stamp = ros::Time::now();
+		// 	odom_trans.transform.translation.x = -0.133029;
+		// 	odom_trans.transform.translation.y = -0.177793;
+		// 	odom_trans.transform.translation.z = 1.689983;
+		// 	odom_trans.transform.rotation.x = 31.207138;
+		// 	odom_trans.transform.rotation.y = -22.649418;
+		// 	odom_trans.transform.rotation.z = -1.236092;
+		// 	odom_trans.transform.rotation.w = 42.360340;
+		// 	joint_pub.publish(joint_state);
+		// 	broadcaster.sendTransform(odom_trans);
+		// }
 		
 
 	    // memset(buf, 0, BUFF_LEN);
@@ -615,7 +653,7 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 	    //parse_data(buf, &index, &parse_bytes);
 	    //memset(buf, 0, BUFF_LEN);
 	    //r.sleep();
-	}
+	// }
 	free(buf);
 }
 
@@ -662,3 +700,4 @@ int main(int argc, char* argv[])
 
 }
 	
+
