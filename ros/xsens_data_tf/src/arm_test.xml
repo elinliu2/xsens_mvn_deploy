@@ -16,9 +16,10 @@
     <origin rpy="0 0 0" xyz="0.3 0 0"/>
     </visual>
   </link>
-  <joint name="base_to_upper_arm" type="fixed">
+  <joint name="base_to_upper_arm" type="continuous">
     <parent link="base_link"/>
     <child link="upper_arm"/>
   </joint>
 </robot>
+
 

@@ -248,15 +248,15 @@ void handle_udp_msg(int fd, int argc, char* argv[])
     geometry_msgs::TransformStamped odom_trans;
     sensor_msgs::JointState joint_state;
     odom_trans.header.frame_id = "odom";
-    odom_trans.child_frame_id = "axis";
+    odom_trans.child_frame_id = "base_link";
 
     while (ros::ok()) {
-        // //update joint_state
-        // joint_state.header.stamp = ros::Time::now();
-        // joint_state.name.resize(1);
-        // joint_state.position.resize(1);
-        // joint_state.name[0] ="base_to_upper_arm";
-        // joint_state.position[0] = base_to_upper_arm;
+        //update joint_state
+        joint_state.header.stamp = ros::Time::now();
+        joint_state.name.resize(1);
+        joint_state.position.resize(1);
+        joint_state.name[0] ="base_to_upper_arm";
+        joint_state.position[0] = base_to_upper_arm;
 
 
         // update transform
@@ -268,7 +268,7 @@ void handle_udp_msg(int fd, int argc, char* argv[])
         odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(angle+M_PI/2);
 
         //send the joint state and transform
-        // joint_pub.publish(joint_state);
+        joint_pub.publish(joint_state);
         broadcaster.sendTransform(odom_trans);
 
         // Create new robot state
