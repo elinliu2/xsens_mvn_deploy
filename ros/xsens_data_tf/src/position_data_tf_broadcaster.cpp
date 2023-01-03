@@ -5,6 +5,7 @@
 #include <sensor_msgs/JointState.h>
 
 
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -226,15 +227,15 @@ void handle_udp_msg(int fd, int argc, char* argv[])
     Header header;
     int round = 0;
 
-    // ros::init(argc, argv, "xsens_data_publisher_tf"); //name of the node
-    // ros::NodeHandle n;
+    ros::init(argc, argv, "xsens_data_publisher_tf"); //name of the node
+    ros::NodeHandle n;
     // //ros::Publisher data_publisher = n.advertise<sensor_msgs::JointState>("position_data", 50);
     // tf::TransformBroadcaster pelvis, l5, l3, t12, t8, neck, head, right_shoulder, right_upper_arm, right_forearm, right_hand, left_shoulder, left_upper_arm, left_forearm, left_hand, right_upper_leg, right_lower_leg, right_foot, right_toe, left_upper_leg, left_lower_leg, left_foot, left_toe;
 	// ros::Rate r(1);
-	// ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 
-	ros::init(argc, argv, "state_publisher");
-    ros::NodeHandle n;
+	// ros::init(argc, argv, "state_publisher");
+    // ros::NodeHandle n;
     ros::Publisher joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
     tf::TransformBroadcaster broadcaster;
     ros::Rate loop_rate(30);
@@ -250,173 +251,161 @@ void handle_udp_msg(int fd, int argc, char* argv[])
     odom_trans.header.frame_id = "odom";
     odom_trans.child_frame_id = "base_link";
 
-    while (ros::ok()) {
-        //update joint_state
-        joint_state.header.stamp = ros::Time::now();
-        joint_state.name.resize(1);
-        joint_state.position.resize(1);
-        joint_state.name[0] ="base_to_upper_arm";
-        joint_state.position[0] = base_to_upper_arm;
+    // while (ros::ok()) {
+    //     //update joint_state
+    //     joint_state.header.stamp = ros::Time::now();
+    //     joint_state.name.resize(1);
+    //     joint_state.position.resize(1);
+    //     joint_state.name[0] ="base_to_upper_arm";
+    //     joint_state.position[0] = base_to_upper_arm;
 
 
-        // update transform
-        // (moving in a circle with radius=2)
-        odom_trans.header.stamp = ros::Time::now();
-        odom_trans.transform.translation.x = cos(angle)*2;
-        odom_trans.transform.translation.y = sin(angle)*2;
-        odom_trans.transform.translation.z = .7;
-        odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(angle+M_PI/2);
+    //     // update transform
+    //     // (moving in a circle with radius=2)
+    //     odom_trans.header.stamp = ros::Time::now();
+    //     odom_trans.transform.translation.x = cos(angle)*2;
+    //     odom_trans.transform.translation.y = sin(angle)*2;
+    //     odom_trans.transform.translation.z = .7;
+    //     odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(angle+M_PI/2);
 
-        //send the joint state and transform
-        joint_pub.publish(joint_state);
-        broadcaster.sendTransform(odom_trans);
+    //     //send the joint state and transform
+    //     joint_pub.publish(joint_state);
+    //     broadcaster.sendTransform(odom_trans);
 
-        // Create new robot state
-        angle += degree/4;
+    //     // This will adjust as needed per iteration
+    //     loop_rate.sleep();
+    // }
 
-        // This will adjust as needed per iteration
-        loop_rate.sleep();
-    }
+	visualization_msgs::Marker markers[23];
+	double marker_size[15][3] = {
+		{0.1, 0.1, 0.1}, // pelvis
+		{0.075, 0.075, 0.075}, // l5
+		{0.075, 0.075, 0.075}, // l3
+		{0.05, 0.05, 0.05}, // t12
+		{0.05, 0.05, 0.05}, // t8
+		{0.05, 0.1, 0.05}, // neck
+		{0.2, 0.2, 0.1}, // head
+		{0.05, 0.05, 0.05}, // right shoulder
+		{0.5, 0.05, 0.05}, // right upper arm
+		{0.5, 0.05, 0.05}, // right forearm
+		{0.05, 0.05, 0.05}, // right hand
+		{0.05, 0.05, 0.05}, // left shoulder
+		{0.5, 0.05, 0.05}, // left upper arm
+		{0.5, 0.05, 0.05}, // left forearm
+		{0.05, 0.05, 0.05} // left hand
+	};
+	double arm_points[2][3];
 
-    // while(ros::ok) 
-    // {
-	// 	visualization_msgs::Marker markers[23];
-		// double marker_size[15][3] = {
-		// 	{0.1, 0.1, 0.1}, // pelvis
-		// 	{0.075, 0.075, 0.075}, // l5
-		// 	{0.075, 0.075, 0.075}, // l3
-		// 	{0.05, 0.05, 0.05}, // t12
-		// 	{0.05, 0.05, 0.05}, // t8
-		// 	{0.05, 0.1, 0.05}, // neck
-		// 	{0.2, 0.2, 0.1}, // head
-		// 	{0.05, 0.05, 0.05}, // right shoulder
-		// 	{0.5, 0.05, 0.05}, // right upper arm
-		// 	{0.5, 0.05, 0.05}, // right forearm
-		// 	{0.05, 0.05, 0.05}, // right hand
-		// 	{0.05, 0.05, 0.05}, // left shoulder
-		// 	{0.5, 0.05, 0.05}, // left upper arm
-		// 	{0.5, 0.05, 0.05}, // left forearm
-		// 	{0.05, 0.05, 0.05} // left hand
-		// };
-		// double arm_points[2][3];
+	markers[0].pose.position.x = 0.000000;
+	markers[0].pose.position.y = 0.000000;
+	markers[0].pose.position.z = 1.250000;
+	markers[0].pose.orientation.x = 2.501707;
+	markers[0].pose.orientation.y = -11.865766;
+	markers[0].pose.orientation.z = -25.172886;
+	markers[0].pose.orientation.w = 50.020779;
 
-			// markers[0].pose.position.x = 0.000000;
-			// markers[0].pose.position.y = 0.000000;
-			// markers[0].pose.position.z = 1.250000;
-			// markers[0].pose.orientation.x = 2.501707;
-			// markers[0].pose.orientation.y = -11.865766;
-			// markers[0].pose.orientation.z = -25.172886;
-			// markers[0].pose.orientation.w = 50.020779;
+	markers[1].pose.position.x = -0.044932;
+	markers[1].pose.position.y = 0.018906;
+	markers[1].pose.position.z = 1.335670;
+	markers[1].pose.orientation.x = 4.631413;
+	markers[1].pose.orientation.y = 0.312930;
+	markers[1].pose.orientation.z = -24.130754;
+	markers[1].pose.orientation.w = 51.758736;
 
-			// markers[1].pose.position.x = -0.044932;
-			// markers[1].pose.position.y = 0.018906;
-			// markers[1].pose.position.z = 1.335670;
-			// markers[1].pose.orientation.x = 4.631413;
-			// markers[1].pose.orientation.y = 0.312930;
-			// markers[1].pose.orientation.z = -24.130754;
-			// markers[1].pose.orientation.w = 51.758736;
+	markers[2].pose.position.x = -0.051285;
+	markers[2].pose.position.y = 0.002468;
+	markers[2].pose.position.z = 1.443354;
+	markers[2].pose.orientation.x = 4.321694;
+	markers[2].pose.orientation.y = 3.118921;
+	markers[2].pose.orientation.z = -23.542290;
+	markers[2].pose.orientation.w = 51.963100;
 
-			// markers[2].pose.position.x = -0.051285;
-			// markers[2].pose.position.y = 0.002468;
-			// markers[2].pose.position.z = 1.443354;
-			// markers[2].pose.orientation.x = 4.321694;
-			// markers[2].pose.orientation.y = 3.118921;
-			// markers[2].pose.orientation.z = -23.542290;
-			// markers[2].pose.orientation.w = 51.963100;
+	markers[3].pose.position.x = -0.047568;
+	markers[3].pose.position.y = -0.015679;
+	markers[3].pose.position.z = 1.541225;
+	markers[3].pose.orientation.x = 5.202236;
+	markers[3].pose.orientation.y = 8.523606;
+	markers[3].pose.orientation.z = -22.526833;
+	markers[3].pose.orientation.w = 51.726540;
 
-			// markers[3].pose.position.x = -0.047568;
-			// markers[3].pose.position.y = -0.015679;
-			// markers[3].pose.position.z = 1.541225;
-			// markers[3].pose.orientation.x = 5.202236;
-			// markers[3].pose.orientation.y = 8.523606;
-			// markers[3].pose.orientation.z = -22.526833;
-			// markers[3].pose.orientation.w = 51.726540;
+	markers[4].pose.position.x = -0.027890;
+	markers[4].pose.position.y = -0.043688;
+	markers[4].pose.position.z = 1.634649;
+	markers[4].pose.orientation.x = 6.924215;
+	markers[4].pose.orientation.y = 15.118811;
+	markers[4].pose.orientation.z = -21.299715;
+	markers[4].pose.orientation.w = 50.523327;
 
-			// markers[4].pose.position.x = -0.027890;
-			// markers[4].pose.position.y = -0.043688;
-			// markers[4].pose.position.z = 1.634649;
-			// markers[4].pose.orientation.x = 6.924215;
-			// markers[4].pose.orientation.y = 15.118811;
-			// markers[4].pose.orientation.z = -21.299715;
-			// markers[4].pose.orientation.w = 50.523327;
+	markers[5].pose.position.x = 0.024514;
+	markers[5].pose.position.y = -0.100810;
+	markers[5].pose.position.z = 1.750692;
+	markers[5].pose.orientation.x = 6.315789;
+	markers[5].pose.orientation.y = 21.653807;
+	markers[5].pose.orientation.z = -16.617392;
+	markers[5].pose.orientation.w = 49.978931;
 
-			// markers[5].pose.position.x = 0.024514;
-			// markers[5].pose.position.y = -0.100810;
-			// markers[5].pose.position.z = 1.750692;
-			// markers[5].pose.orientation.x = 6.315789;
-			// markers[5].pose.orientation.y = 21.653807;
-			// markers[5].pose.orientation.z = -16.617392;
-			// markers[5].pose.orientation.w = 49.978931;
+	markers[6].pose.position.x = 0.079551;
+	markers[6].pose.position.y = -0.138843;
+	markers[6].pose.position.z = 1.814727;
+	markers[6].pose.orientation.x = -0.216051;
+	markers[6].pose.orientation.y = 17.391775;
+	markers[6].pose.orientation.z = -9.279763;
+	markers[6].pose.orientation.w = 53.797520;
 
-			// markers[6].pose.position.x = 0.079551;
-			// markers[6].pose.position.y = -0.138843;
-			// markers[6].pose.position.z = 1.814727;
-			// markers[6].pose.orientation.x = -0.216051;
-			// markers[6].pose.orientation.y = 17.391775;
-			// markers[6].pose.orientation.z = -9.279763;
-			// markers[6].pose.orientation.w = 53.797520;
+	markers[7].pose.position.x = -0.020243;
+	markers[7].pose.position.y = -0.096641;
+	markers[7].pose.position.z = 1.699143;
+	markers[7].pose.orientation.x = 10.992354;
+	markers[7].pose.orientation.y = 17.610273;
+	markers[7].pose.orientation.z = -23.740341;
+	markers[7].pose.orientation.w = 47.835659;
 
-			// markers[7].pose.position.x = -0.020243;
-			// markers[7].pose.position.y = -0.096641;
-			// markers[7].pose.position.z = 1.699143;
-			// markers[7].pose.orientation.x = 10.992354;
-			// markers[7].pose.orientation.y = 17.610273;
-			// markers[7].pose.orientation.z = -23.740341;
-			// markers[7].pose.orientation.w = 47.835659;
+    while(ros::ok) 
+    {
+		for (int i = 0; i < 7; i++){
+			markers[i].header.frame_id = "odom";
+			markers[i].header.stamp = ros::Time::now();
+			markers[i].ns = "body";
+			markers[i].id = i;
+			markers[i].scale.x = marker_size[i][0];
+			markers[i].scale.y = marker_size[i][1];
+			markers[i].scale.z = marker_size[i][2];
+			markers[i].color.r = 0.0f;
+			markers[i].color.g = 1.0f;
+			markers[i].color.b = 0.0f;
+			markers[i].color.a = 1.0;
+			markers[i].type = visualization_msgs::Marker::CUBE;
+			markers[i].action = visualization_msgs::Marker::ADD;
+			markers[i].lifetime = ros::Duration();	
+			marker_pub.publish(markers[i]);
+		}
+		//update joint_state
+		joint_state.header.stamp = ros::Time::now();
+		joint_state.name.resize(1);
+		joint_state.position.resize(1);
+		joint_state.name[0] ="base_to_upper_arm";
+		joint_state.position[0] = base_to_upper_arm;
 
-			// markers[8].points.resize(6);
-			// markers[8].points[0].x = -0.133029;
-			// markers[8].points[0].y = -0.177793;
-			// markers[8].points[0].z = 1.689983;
-			// markers[8].points[1].x = -0.014050;
-			// markers[8].points[1].y = -0.298868;
-			// markers[8].points[1].z = 1.444568;
-			
-		
-			// markers[9].points.resize(6);
-			// markers[9].points[0].x = -0.014050;
-			// markers[9].points[0].y = -0.298868;
-			// markers[9].points[0].z = 1.444568;
-			// markers[9].points[1].x = 0.163226;
-			// markers[9].points[1].y = -0.465767;
-			// markers[9].points[1].z = 1.430470;
+		// update transform
+		// (moving in a circle with radius=2)
+		odom_trans.header.stamp = ros::Time::now();
+		odom_trans.transform.translation.x = -0.133029;
+		odom_trans.transform.translation.y = -0.177793;
+		odom_trans.transform.translation.z = 1.689983;
+		// odom_trans.transform.rotation.x = 31.207138;
+		// odom_trans.transform.rotation.y = -22.649418;
+		// odom_trans.transform.rotation.z = -1.236092;
+		// odom_trans.transform.rotation.w = 42.360340;
+		tf::Quaternion quat_norm = tf::Quaternion(31.207138, -22.649418, -1.236092, 42.360340).normalize();
+		odom_trans.transform.rotation.x = quat_norm.x();
+		odom_trans.transform.rotation.y = quat_norm.y();
+		odom_trans.transform.rotation.z = quat_norm.z();
+		odom_trans.transform.rotation.w = quat_norm.w();
 
-		// while(1){
-			// for (int i = 0; i < 7; i++){
-			// 	markers[i].header.frame_id = "my_frame";
-			// 	markers[i].header.stamp = ros::Time::now();
-			// 	markers[i].ns = "body";
-			// 	markers[i].id = segment_id;
-			// 	markers[i].scale.x = marker_size[i][0];
-			// 	markers[i].scale.y = marker_size[i][1];
-			// 	markers[i].scale.z = marker_size[i][2];
-			// 	markers[i].color.r = 0.0f;
-			// 	markers[i].color.g = 1.0f;
-			// 	markers[i].color.b = 0.0f;
-			// 	markers[i].color.a = 1.0;
-
-			// 	// if(i != 9 && i != 10 && i != 11){
-			// 		markers[i].type = visualization_msgs::Marker::CUBE;
-					
-			// 	// } else {
-			// 	// 	markers[i].type = visualization_msgs::Marker::ARROW;
-					
-			// 	// }
-			// 	markers[i].action = visualization_msgs::Marker::ADD;
-			// 	markers[i].lifetime = ros::Duration();	
-			// 	marker_pub.publish(markers[i]);
-			// }
-		// 	odom_trans.header.stamp = ros::Time::now();
-		// 	odom_trans.transform.translation.x = -0.133029;
-		// 	odom_trans.transform.translation.y = -0.177793;
-		// 	odom_trans.transform.translation.z = 1.689983;
-		// 	odom_trans.transform.rotation.x = 31.207138;
-		// 	odom_trans.transform.rotation.y = -22.649418;
-		// 	odom_trans.transform.rotation.z = -1.236092;
-		// 	odom_trans.transform.rotation.w = 42.360340;
-		// 	joint_pub.publish(joint_state);
-		// 	broadcaster.sendTransform(odom_trans);
-		// }
+		//send the joint state and transform
+		joint_pub.publish(joint_state);
+		broadcaster.sendTransform(odom_trans);
+	}
 		
 
 	    // memset(buf, 0, BUFF_LEN);
@@ -646,8 +635,8 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 		// 	}		
 		// } 	
 
-	    round++;
-	    printf("round = %d\n", round);
+	    // round++;
+	    // printf("round = %d\n", round);
 	    //if (round == 2)
 	    //break;
 	    //parse_data(buf, &index, &parse_bytes);
