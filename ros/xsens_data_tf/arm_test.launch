@@ -1,5 +1,18 @@
 <launch>
-        <param name="robot_description" command="cat $(find xsens_data_tf)/src/arm_test.xml" />
-        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" required="true"/>
+        <param name="robot_description" command="cat $(find xsens_data_tf)/src/ru_arm_test.xml" />
+        <node name="robot_state_publisher_ru" pkg="robot_state_publisher" type="robot_state_publisher" required="true"/>
+        <param name="robot_description" command="cat $(find xsens_data_tf)/src/rl_arm_test.xml" />
+        <node name="robot_state_publisher_rl" pkg="robot_state_publisher" type="robot_state_publisher" required="true"/>
+        <param name="robot_description" command="cat $(find xsens_data_tf)/src/lu_arm_test.xml" />
+        <node name="robot_state_publisher_lu" pkg="robot_state_publisher" type="robot_state_publisher" required="true"/>
+        <param name="robot_description" command="cat $(find xsens_data_tf)/src/ll_arm_test.xml" />
+        <node name="robot_state_publisher_ll" pkg="robot_state_publisher" type="robot_state_publisher" required="true"/>
+        
+        <!-- <param name="robot_description" command="cat $(find xsens_data_tf)/src/arm_test.xml" />
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" required="true"/> -->
+        
+        <!-- <param name="robot_description" command="cat $(find xsens_data_tf)/src/multiarm_test.xml" />
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" required="true"/> -->
+        
         <node name="xsens_data_publisher_tf" pkg="xsens_data_tf" type="xsens_data_tf_broadcaster" required="true" />
 </launch>

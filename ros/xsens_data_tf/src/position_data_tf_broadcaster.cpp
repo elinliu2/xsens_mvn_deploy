@@ -213,7 +213,7 @@ void parse_body(char *buf, int *segment_id, float *x, float *y, float *z, float 
 
 void handle_udp_msg(int fd, int argc, char* argv[])
 {
-    char *buf = (char*)malloc(1024);
+    // char *buf = (char*)malloc(1024);
     int read_bytes = 0; 
     int cur_index = 0;
     int count;
@@ -236,7 +236,7 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 
 	// ros::init(argc, argv, "state_publisher");
     // ros::NodeHandle n;
-    ros::Publisher joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
+	ros::Publisher joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
     tf::TransformBroadcaster broadcaster;
     ros::Rate loop_rate(30);
 
@@ -246,13 +246,33 @@ void handle_udp_msg(int fd, int argc, char* argv[])
     double base_to_upper_arm = 0, angle = 0;
 
     // message declarations
-    geometry_msgs::TransformStamped odom_trans;
-    sensor_msgs::JointState joint_state;
-    odom_trans.header.frame_id = "odom";
-    odom_trans.child_frame_id = "base_link";
+    sensor_msgs::JointState joint_state_ru;
+	geometry_msgs::TransformStamped odom_trans_ru;
+    odom_trans_ru.header.frame_id = "odom";
+    odom_trans_ru.child_frame_id = "ru_base_link";
+
+    sensor_msgs::JointState joint_state_lu;
+	geometry_msgs::TransformStamped odom_trans_lu;
+    odom_trans_lu.header.frame_id = "odom";
+    odom_trans_lu.child_frame_id = "lu_base_link";
+
+    sensor_msgs::JointState joint_state_rl;
+	geometry_msgs::TransformStamped odom_trans_rl;
+    odom_trans_rl.header.frame_id = "odom";
+    odom_trans_rl.child_frame_id = "rl_base_link";
+
+    sensor_msgs::JointState joint_state_ll;
+	geometry_msgs::TransformStamped odom_trans_ll;
+    odom_trans_ll.header.frame_id = "odom";
+    odom_trans_ll.child_frame_id = "ll_base_link";
+
+	// sensor_msgs::JointState joint_state;
+	// geometry_msgs::TransformStamped odom_trans;
+    // odom_trans.header.frame_id = "odom";
+    // odom_trans.child_frame_id = "base_link";
 
     // while (ros::ok()) {
-    //     //update joint_state
+    //     // update joint_state
     //     joint_state.header.stamp = ros::Time::now();
     //     joint_state.name.resize(1);
     //     joint_state.position.resize(1);
@@ -360,6 +380,30 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 	markers[7].pose.orientation.z = -23.740341;
 	markers[7].pose.orientation.w = 47.835659;
 
+	markers[10].pose.position.x = 0.163226;
+	markers[10].pose.position.y = -0.465767;
+	markers[10].pose.position.z = 1.430470;
+	markers[10].pose.orientation.x = -31.921501;
+	markers[10].pose.orientation.y = 17.997187;
+	markers[10].pose.orientation.z = -13.426641;
+	markers[10].pose.orientation.w = -41.948212;
+
+	markers[11].pose.position.x = 0.023174;
+	markers[11].pose.position.y = -0.054733;
+	markers[11].pose.position.z = 1.700165;
+	markers[11].pose.orientation.x = 5.903529;
+	markers[11].pose.orientation.y = 19.641693;
+	markers[11].pose.orientation.z = -18.408167;
+	markers[11].pose.orientation.w = 50.232452;
+
+	markers[14].pose.position.x = 0.388494;
+	markers[14].pose.position.y = -0.004390;
+	markers[14].pose.position.z = 1.420095;
+	markers[14].pose.orientation.x = 29.694004;
+	markers[14].pose.orientation.y = -6.812324;
+	markers[14].pose.orientation.z = 43.115200;
+	markers[14].pose.orientation.w = -22.265348;
+
     while(ros::ok) 
     {
 		for (int i = 0; i < 7; i++){
@@ -380,31 +424,96 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 			marker_pub.publish(markers[i]);
 		}
 		//update joint_state
-		joint_state.header.stamp = ros::Time::now();
-		joint_state.name.resize(1);
-		joint_state.position.resize(1);
-		joint_state.name[0] ="base_to_upper_arm";
-		joint_state.position[0] = base_to_upper_arm;
+		// joint_state.header.stamp = ros::Time::now();
+		// joint_state.name.resize(1);
+		// joint_state.position.resize(1);
+		// joint_state.name[0] ="base_to_upper_arm";
+		// joint_state.position[0] = base_to_upper_arm;
 
 		// update transform
 		// (moving in a circle with radius=2)
-		odom_trans.header.stamp = ros::Time::now();
-		odom_trans.transform.translation.x = -0.133029;
-		odom_trans.transform.translation.y = -0.177793;
-		odom_trans.transform.translation.z = 1.689983;
+		
 		// odom_trans.transform.rotation.x = 31.207138;
 		// odom_trans.transform.rotation.y = -22.649418;
 		// odom_trans.transform.rotation.z = -1.236092;
 		// odom_trans.transform.rotation.w = 42.360340;
+		//update joint_state
+        
+		joint_state_ru.header.stamp = ros::Time::now();
+        joint_state_ru.name.resize(1);
+        joint_state_ru.position.resize(1);
+        joint_state_ru.name[0] ="ru_base_to_right_upper_arm";
+        joint_state_ru.position[0] = 0;
+		odom_trans_ru.header.stamp = ros::Time::now();
+		odom_trans_ru.transform.translation.x = -0.133029;
+		odom_trans_ru.transform.translation.y = -0.177793;
+		odom_trans_ru.transform.translation.z = 1.689983;
 		tf::Quaternion quat_norm = tf::Quaternion(31.207138, -22.649418, -1.236092, 42.360340).normalize();
-		odom_trans.transform.rotation.x = quat_norm.x();
-		odom_trans.transform.rotation.y = quat_norm.y();
-		odom_trans.transform.rotation.z = quat_norm.z();
-		odom_trans.transform.rotation.w = quat_norm.w();
+		odom_trans_ru.transform.rotation.x = quat_norm.x();
+		odom_trans_ru.transform.rotation.y = quat_norm.y();
+		odom_trans_ru.transform.rotation.z = quat_norm.z();
+		odom_trans_ru.transform.rotation.w = quat_norm.w();
 
 		//send the joint state and transform
-		joint_pub.publish(joint_state);
-		broadcaster.sendTransform(odom_trans);
+		joint_pub.publish(joint_state_ru);
+		broadcaster.sendTransform(odom_trans_ru);
+
+		joint_state_rl.header.stamp = ros::Time::now();
+        joint_state_rl.name.resize(1);
+        joint_state_rl.position.resize(1);
+        joint_state_rl.name[0] ="rl_base_to_right_lower_arm";
+        joint_state_rl.position[0] = 0;
+		odom_trans_rl.header.stamp = ros::Time::now();
+		odom_trans_rl.transform.translation.x = -0.014050;
+		odom_trans_rl.transform.translation.y = -0.298868;
+		odom_trans_rl.transform.translation.z = 1.444568;
+		quat_norm = tf::Quaternion(7.038776, -12.243839, 21.647104, 51.134670).normalize();
+		odom_trans_rl.transform.rotation.x = quat_norm.x();
+		odom_trans_rl.transform.rotation.y = quat_norm.y();
+		odom_trans_rl.transform.rotation.z = quat_norm.z();
+		odom_trans_rl.transform.rotation.w = quat_norm.w();
+
+		//send the joint state and transform
+		joint_pub.publish(joint_state_rl);
+		broadcaster.sendTransform(odom_trans_rl);
+
+		joint_state_lu.header.stamp = ros::Time::now();
+        joint_state_lu.name.resize(1);
+        joint_state_lu.position.resize(1);
+        joint_state_lu.name[0] ="lu_base_to_left_upper_arm";
+        joint_state_lu.position[0] = 0;
+		odom_trans_lu.header.stamp = ros::Time::now();
+		odom_trans_lu.transform.translation.x = 0.111420;
+		odom_trans_lu.transform.translation.y =  0.052801;
+		odom_trans_lu.transform.translation.z = 1.694657;
+		quat_norm = tf::Quaternion(-40.595516, 11.896190, -27.562300, 27.085272).normalize();
+		odom_trans_lu.transform.rotation.x = quat_norm.x();
+		odom_trans_lu.transform.rotation.y = quat_norm.y();
+		odom_trans_lu.transform.rotation.z = quat_norm.z();
+		odom_trans_lu.transform.rotation.w = quat_norm.w();
+
+		//send the joint state and transform
+		joint_pub.publish(joint_state_lu);
+		broadcaster.sendTransform(odom_trans_lu);
+
+		joint_state_ll.header.stamp = ros::Time::now();
+        joint_state_ll.name.resize(1);
+        joint_state_ll.position.resize(1);
+        joint_state_ll.name[0] ="ll_base_to_left_lower_arm";
+        joint_state_ll.position[0] = 0;
+		odom_trans_ll.header.stamp = ros::Time::now();
+		odom_trans_ll.transform.translation.x = 0.159341;
+		odom_trans_ll.transform.translation.y = -0.086505;
+		odom_trans_ll.transform.translation.z = 1.435155;
+		quat_norm = tf::Quaternion(-5.943353, -5.397271, -32.456612, 46.528725).normalize();
+		odom_trans_ll.transform.rotation.x = quat_norm.x();
+		odom_trans_ll.transform.rotation.y = quat_norm.y();
+		odom_trans_ll.transform.rotation.z = quat_norm.z();
+		odom_trans_ll.transform.rotation.w = quat_norm.w();
+
+		//send the joint state and transform
+		broadcaster.sendTransform(odom_trans_ll);
+		joint_pub.publish(joint_state_ll);
 	}
 		
 
@@ -643,7 +752,7 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 	    //memset(buf, 0, BUFF_LEN);
 	    //r.sleep();
 	// }
-	free(buf);
+	// free(buf);
 }
 
 

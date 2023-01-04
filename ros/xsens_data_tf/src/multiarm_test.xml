@@ -1,0 +1,88 @@
+<?xml version="2.0"?>
+<robot name="multiple_arms">
+   <link name="ll_base_link">
+    <visual>
+      <geometry>
+              <sphere radius="0.05"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="left_lower_arm">
+    <visual>
+      <geometry>
+        <box size="0.05 0.25 0.05"/>
+      </geometry>
+    <origin rpy="0 0 0" xyz="0 -0.125 0"/>
+    </visual>
+  </link>
+  <joint name="ll_base_to_left_lower_arm" type="continuous">
+    <parent link="ll_base_link"/>
+    <child link="left_lower_arm"/>
+  </joint>
+
+  <link name="lu_base_link">
+    <visual>
+      <geometry>
+              <sphere radius="0.05"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="left_upper_arm">
+    <visual>
+      <geometry>
+        <box size="0.05 0.25 0.05"/>
+      </geometry>
+    <origin rpy="0 0 0" xyz="0 -0.125 0"/>
+    </visual>
+  </link>
+  <joint name="lu_base_to_left_upper_arm" type="continuous">
+    <parent link="lu_base_link"/>
+    <child link="left_upper_arm"/>
+  </joint>
+
+  <link name="rl_base_link">
+    <visual>
+      <geometry>
+              <sphere radius="0.05"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="right_lower_arm">
+    <visual>
+      <geometry>
+        <box size="0.05 0.25 0.05"/>
+      </geometry>
+    <origin rpy="0 0 0" xyz="0 -0.125 0"/>
+    </visual>
+  </link>
+  <joint name="rl_base_to_right_lower_arm" type="continuous">
+    <parent link="rl_base_link"/>
+    <child link="right_lower_arm"/>
+  </joint>
+
+  <link name="ru_base_link">
+    <visual>
+      <geometry>
+              <sphere radius="0.05"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="right_upper_arm">
+    <visual>
+      <geometry>
+        <box size="0.05 0.25 0.05"/>
+      </geometry>
+    <origin rpy="0 0 0" xyz="0 -0.125 0"/>
+    </visual>
+  </link>
+  <joint name="ru_base_to_right_upper_arm" type="continuous">
+    <parent link="ru_base_link"/>
+    <child link="right_upper_arm"/>
+  </joint>
+</robot>
+
+
