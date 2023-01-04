@@ -13,7 +13,7 @@
       <geometry>
         <box size="0.05 0.25 0.05"/>
       </geometry>
-    <origin rpy="0 0 0" xyz="0 -0.125 0"/>
+    <origin rpy="0 0 0" xyz="0 0.125 0"/>
     </visual>
   </link>
   <joint name="lu_base_to_left_upper_arm" type="continuous">
@@ -21,5 +21,6 @@
     <child link="left_upper_arm"/>
   </joint>
 </robot>
+
 
 

@@ -236,8 +236,12 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 
 	// ros::init(argc, argv, "state_publisher");
     // ros::NodeHandle n;
-	ros::Publisher joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
-    tf::TransformBroadcaster broadcaster;
+	ros::Publisher joint_pub_ru = n.advertise<sensor_msgs::JointState>("arm_ru/joint_states", 1);
+    ros::Publisher joint_pub_rl = n.advertise<sensor_msgs::JointState>("arm_rl/joint_states", 1);
+    ros::Publisher joint_pub_lu = n.advertise<sensor_msgs::JointState>("arm_lu/joint_states", 1);
+    ros::Publisher joint_pub_ll = n.advertise<sensor_msgs::JointState>("arm_ll/joint_states", 1);
+    
+	tf::TransformBroadcaster broadcaster;
     ros::Rate loop_rate(30);
 
     const double degree = M_PI/180;
@@ -406,22 +410,26 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 
     while(ros::ok) 
     {
-		for (int i = 0; i < 7; i++){
-			markers[i].header.frame_id = "odom";
-			markers[i].header.stamp = ros::Time::now();
-			markers[i].ns = "body";
-			markers[i].id = i;
-			markers[i].scale.x = marker_size[i][0];
-			markers[i].scale.y = marker_size[i][1];
-			markers[i].scale.z = marker_size[i][2];
-			markers[i].color.r = 0.0f;
-			markers[i].color.g = 1.0f;
-			markers[i].color.b = 0.0f;
-			markers[i].color.a = 1.0;
-			markers[i].type = visualization_msgs::Marker::CUBE;
-			markers[i].action = visualization_msgs::Marker::ADD;
-			markers[i].lifetime = ros::Duration();	
-			marker_pub.publish(markers[i]);
+		for (int i = 0; i < 15; i++){
+			if (!(i==8||i==9||i==12||i==13))
+			{
+				markers[i].header.frame_id = "odom";
+				markers[i].header.stamp = ros::Time::now();
+				markers[i].ns = "body";
+				markers[i].id = i;
+				markers[i].scale.x = marker_size[i][0];
+				markers[i].scale.y = marker_size[i][1];
+				markers[i].scale.z = marker_size[i][2];
+				markers[i].color.r = 0.0f;
+				markers[i].color.g = 1.0f;
+				markers[i].color.b = 0.0f;
+				markers[i].color.a = 1.0;
+				markers[i].type = visualization_msgs::Marker::CUBE;
+				markers[i].action = visualization_msgs::Marker::ADD;
+				markers[i].lifetime = ros::Duration();	
+				marker_pub.publish(markers[i]);
+			}
+			
 		}
 		//update joint_state
 		// joint_state.header.stamp = ros::Time::now();
@@ -455,7 +463,7 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 		odom_trans_ru.transform.rotation.w = quat_norm.w();
 
 		//send the joint state and transform
-		joint_pub.publish(joint_state_ru);
+		joint_pub_ru.publish(joint_state_ru);
 		broadcaster.sendTransform(odom_trans_ru);
 
 		joint_state_rl.header.stamp = ros::Time::now();
@@ -474,7 +482,7 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 		odom_trans_rl.transform.rotation.w = quat_norm.w();
 
 		//send the joint state and transform
-		joint_pub.publish(joint_state_rl);
+		joint_pub_rl.publish(joint_state_rl);
 		broadcaster.sendTransform(odom_trans_rl);
 
 		joint_state_lu.header.stamp = ros::Time::now();
@@ -493,7 +501,7 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 		odom_trans_lu.transform.rotation.w = quat_norm.w();
 
 		//send the joint state and transform
-		joint_pub.publish(joint_state_lu);
+		joint_pub_lu.publish(joint_state_lu);
 		broadcaster.sendTransform(odom_trans_lu);
 
 		joint_state_ll.header.stamp = ros::Time::now();
@@ -513,7 +521,7 @@ void handle_udp_msg(int fd, int argc, char* argv[])
 
 		//send the joint state and transform
 		broadcaster.sendTransform(odom_trans_ll);
-		joint_pub.publish(joint_state_ll);
+		joint_pub_ll.publish(joint_state_ll);
 	}
 		
 
@@ -798,4 +806,5 @@ int main(int argc, char* argv[])
 
 }
 	
+
 
